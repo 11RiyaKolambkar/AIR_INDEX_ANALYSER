@@ -12,34 +12,38 @@
         <h1>Air Quality Index Analyzer</h1>
         <p class="subtitle">Enter pollution values to predict AQI</p>
 
+        <!-- Auto detect button -->
+        <button type="button" onclick="autoFill()">Detect My Location</button>
+        <p id="city-name" style="margin-top: 8px; font-weight: bold;"></p>
+
         <form method="POST">
             <div class="form-group">
                 <label>PM2.5</label>
-                <input type="number" name="pm25" placeholder="Enter PM2.5 value" step="0.01" required>
+                <input type="number" id="pm25" name="pm25" placeholder="Enter PM2.5 value" step="0.01" required>
             </div>
             <div class="form-group">
                 <label>PM10</label>
-                <input type="number" name="pm10" placeholder="Enter PM10 value" step="0.01" required>
+                <input type="number" id="pm10" name="pm10" placeholder="Enter PM10 value" step="0.01" required>
             </div>
             <div class="form-group">
                 <label>NO2</label>
-                <input type="number" name="no2" placeholder="Enter NO2 value" step="0.01" required>
+                <input type="number" id="no2" name="no2" placeholder="Enter NO2 value" step="0.01" required>
             </div>
             <div class="form-group">
                 <label>CO</label>
-                <input type="number" name="co" placeholder="Enter CO value" step="0.01" required>
+                <input type="number" id="co" name="co" placeholder="Enter CO value" step="0.01" required>
             </div>
             <div class="form-group">
                 <label>SO2</label>
-                <input type="number" name="so2" placeholder="Enter SO2 value" step="0.01" required>
+                <input type="number" id="so2" name="so2" placeholder="Enter SO2 value" step="0.01" required>
             </div>
             <button type="submit">Predict AQI</button>
         </form>
 
         {% if prediction %}
         <div class="result {{ category_class }}">
-            <h2>Predicted AQI: <span class="text-{{ category_class }}">{{ prediction }}</span></h2>
-            <h3>Category: <span class="text-{{ category_class }}">{{ category }}</span></h3>
+            <h2>Predicted AQI: <span style="color: {{ color }}">{{ prediction }}</span></h2>
+            <h3>Category: <span style="color: {{ color }}">{{ category }}</span></h3>
             <div class="aqi-guide">
                 <p>AQI 0-50 → <span style="color:#2ecc71">Good</span></p>
                 <p>AQI 51-100 → <span style="color:#f39c12">Moderate</span></p>
@@ -50,6 +54,39 @@
         </div>
         {% endif %}
     </div>
+<script>
+function autoFill() {
+    document.getElementById('city-name').innerText = "Detecting location...";
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            document.getElementById('city-name').innerText = "Got GPS: " + lat + ", " + lon;
+
+            fetch('/realtime?lat=' + lat + '&lon=' + lon)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === "ok") {
+                    document.getElementById('pm25').value = result.data.pm25;
+                    document.getElementById('pm10').value = result.data.pm10;
+                    document.getElementById('no2').value  = result.data.no2;
+                    document.getElementById('co').value   = result.data.co;
+                    document.getElementById('so2').value  = result.data.so2;
+                    document.getElementById('city-name').innerText = "Location: " + result.data.city;
+                } else {
+                    document.getElementById('city-name').innerText = "Error: " + result.message;
+                }
+            });
+        },
+        function(error) {
+            document.getElementById('city-name').innerText = "GPS failed, code: " + error.code;
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+</script>
+
 
 </body>
 </html>
