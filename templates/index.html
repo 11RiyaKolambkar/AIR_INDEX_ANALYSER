@@ -7,43 +7,35 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
     <div class="container">
         <h1>Air Quality Index Analyzer</h1>
-        <p class="subtitle">Enter pollution values to predict AQI</p>
+        <p class="subtitle">Real-time air quality for your location or any city</p>
 
-        <!-- Auto detect button -->
         <button type="button" onclick="autoFill()">Detect My Location</button>
-        <p id="city-name" style="margin-top: 8px; font-weight: bold;"></p>
 
-        <form method="POST">
-            <div class="form-group">
-                <label>PM2.5</label>
-                <input type="number" id="pm25" name="pm25" placeholder="Enter PM2.5 value" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label>PM10</label>
-                <input type="number" id="pm10" name="pm10" placeholder="Enter PM10 value" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label>NO2</label>
-                <input type="number" id="no2" name="no2" placeholder="Enter NO2 value" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label>CO</label>
-                <input type="number" id="co" name="co" placeholder="Enter CO value" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label>SO2</label>
-                <input type="number" id="so2" name="so2" placeholder="Enter SO2 value" step="0.01" required>
-            </div>
-            <button type="submit">Predict AQI</button>
-        </form>
+        <div class="city-search">
+            <input type="text" id="city-input" placeholder="Search city eg: Mumbai, Delhi">
+            <button type="button" onclick="searchCity()">Search City</button>
+        </div>
 
-        {% if prediction %}
-        <div class="result {{ category_class }}">
-            <h2>Predicted AQI: <span style="color: {{ color }}">{{ prediction }}</span></h2>
-            <h3>Category: <span style="color: {{ color }}">{{ category }}</span></h3>
+        <div id="result-box" style="display:none;" class="result">
+            <h2 id="result-city"></h2>
+            <h1 id="result-aqi"></h1>
+            <h3 id="result-category"></h3>
+            <div class="health-tips">
+                <h3>Health Tips</h3>
+                <p id="result-health"></p>
+            </div>
+            <div class="pollutants">
+                <h3>Pollutants</h3>
+                <div class="pollutant-grid">
+                    <div class="pollutant-item"><span>PM2.5</span><b id="val-pm25"></b></div>
+                    <div class="pollutant-item"><span>PM10</span><b id="val-pm10"></b></div>
+                    <div class="pollutant-item"><span>NO2</span><b id="val-no2"></b></div>
+                    <div class="pollutant-item"><span>SO2</span><b id="val-so2"></b></div>
+                    <div class="pollutant-item"><span>CO</span><b id="val-co"></b></div>
+                </div>
+            </div>
             <div class="aqi-guide">
                 <p>AQI 0-50 → <span style="color:#2ecc71">Good</span></p>
                 <p>AQI 51-100 → <span style="color:#f39c12">Moderate</span></p>
@@ -52,41 +44,65 @@
                 <p>AQI 200+ → <span style="color:#8e44ad">Hazardous</span></p>
             </div>
         </div>
-        {% endif %}
+
+        <p id="status-msg" style="margin-top:10px; font-weight:bold;"></p>
     </div>
-<script>
-function autoFill() {
-    document.getElementById('city-name').innerText = "Detecting location...";
 
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            document.getElementById('city-name').innerText = "Got GPS: " + lat + ", " + lon;
+    <script>
+    function showResult(data) {
+        document.getElementById('result-box').style.display = 'block';
+        document.getElementById('result-city').innerText = data.city;
+        document.getElementById('result-aqi').innerHTML = 'AQI: <span style="color:' + data.color + '">' + data.aqi + '</span>';
+        document.getElementById('result-category').innerHTML = 'Category: <span style="color:' + data.color + '">' + data.category + '</span>';
+        document.getElementById('result-health').innerText = data.health_tip;
+        document.getElementById('val-pm25').innerText = data.pm25;
+        document.getElementById('val-pm10').innerText = data.pm10;
+        document.getElementById('val-no2').innerText = data.no2;
+        document.getElementById('val-so2').innerText = data.so2;
+        document.getElementById('val-co').innerText = data.co;
+        document.getElementById('result-box').style.borderColor = data.color;
+    }
 
-            fetch('/realtime?lat=' + lat + '&lon=' + lon)
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === "ok") {
-                    document.getElementById('pm25').value = result.data.pm25;
-                    document.getElementById('pm10').value = result.data.pm10;
-                    document.getElementById('no2').value  = result.data.no2;
-                    document.getElementById('co').value   = result.data.co;
-                    document.getElementById('so2').value  = result.data.so2;
-                    document.getElementById('city-name').innerText = "Location: " + result.data.city;
-                } else {
-                    document.getElementById('city-name').innerText = "Error: " + result.message;
-                }
-            });
-        },
-        function(error) {
-            document.getElementById('city-name').innerText = "GPS failed, code: " + error.code;
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
-}
-</script>
+    function autoFill() {
+        document.getElementById('status-msg').innerText = "Detecting location...";
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+                document.getElementById('status-msg').innerText = "Fetching AQI...";
+                fetch('/realtime?lat=' + lat + '&lon=' + lon)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === "ok") {
+                        showResult(result.data);
+                        document.getElementById('status-msg').innerText = "";
+                    } else {
+                        document.getElementById('status-msg').innerText = "Error: " + result.message;
+                    }
+                });
+            },
+            function(error) {
+                document.getElementById('status-msg').innerText = "GPS failed. Please allow location access.";
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
 
-
+    function searchCity() {
+        var city = document.getElementById('city-input').value;
+        if (!city) return;
+        document.getElementById('status-msg').innerText = "Searching...";
+        fetch('/city?city=' + city)
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === "ok") {
+                showResult(result.data);
+                document.getElementById('status-msg').innerText = "";
+            } else {
+                document.getElementById('status-msg').innerText = "City not found. Try another name.";
+            }
+        });
+    }
+    </script>
 </body>
 </html>

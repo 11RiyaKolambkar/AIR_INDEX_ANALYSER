@@ -153,3 +153,68 @@ button:hover {
     font-size: 0.8rem;
     color: #64748b;
 }
+.health-tips {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    text-align: left;
+}
+
+.health-tips h3 {
+    margin-bottom: 8px;
+}
+.city-search {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+.city-search input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    box-sizing: border-box;
+}
+
+.city-search input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+.pollutants {
+    margin-top: 15px;
+    text-align: left;
+}
+
+.pollutants h3 {
+    margin-bottom: 10px;
+}
+
+.pollutant-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.pollutant-item {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.pollutant-item span {
+    display: block;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.pollutant-item b {
+    font-size: 1rem;
+    color: #f1f5f9;
+}
